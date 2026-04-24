@@ -1,7 +1,7 @@
 ---
 title: "STAT 350 (Survival Analysis): Final group assignment"
-author: "XX YOUR NAMES HERE XX"
-date: "2026-04-XX"
+author: "Shamil Khusnullin"
+date: "2026-04-26"
 date-format: iso
 format: pdf
 toc: true
@@ -44,12 +44,12 @@ Include a in-text citation (no BibTeX needed!) for the article, provide a brief 
 
 SOLUTION:
 
-- TITLE:
-- AUTHORS:
-- JOURNAL:
-- YEAR:
-- VOLUME: 
-- URL/DOI: 
+- TITLE: An Application of the Cox Proportional Hazards Model to Bank Failure
+- AUTHORS: William R. Lane, Stephen W. Looney, and James W. Wansley
+- JOURNAL: Journal of Banking and Finance
+- YEAR: 1986
+- VOLUME: 10, Issue 4, pages 511–531
+- URL/DOI: 10.1016/S0378-4266(86)80003-6
 
 XX
 
@@ -87,8 +87,8 @@ set.seed(1821)
 num_sim <- 2000 
 
 gen_data <- function(
-  beta_1 = -0.8, # log hazard ratio for treatment effect
-  itt_prob = 0.1, # P(intervention subject doesn't take meds)
+  beta_1 = -0.4, # log hazard ratio for treatment effect
+  itt_prob = 0.0, # P(intervention subject doesn't take meds)
   shape_val = 3, # underlying shape value
   scale_val = 5, # underlying scale value
   n = 300, # total sample size (half randomized to each group)
@@ -96,15 +96,38 @@ gen_data <- function(
     ) {
   simulated_data <- tibble(
     randomized_treat = rep(c(0, 1), times = n/2)
-  )
-  # add other lines here
+  )|>
+    mutate(
+      actual_treat = if_else(
+        randomized_treat == 1,
+        rbinom(n(), size = 1, prob = 1 - itt_prob),
+        0L
+      ),
+      true_t = rphreg(
+        runif(n),
+        ~ actual_treat,
+        beta = beta_1,
+        dist = "weibull",
+        shape = shape_val,
+        scale = scale_val
+      ),
+      time = pmin(true_t, tau),
+      status = as.numeric(true_t <= tau)
+    ) |>
+    select(-true_t)
+
   return(simulated_data)
 }
+
+glimpse(gen_data())
+
+  
+
 ```
 
 
 ```{r}
-#| eval: false
+#| eval: true
 run_sim0 <- function() {
   data <- gen_data(beta_1 = 0)
   fit <- survdiff(Surv(time, status) ~ randomized_treat, data = data)
@@ -118,17 +141,56 @@ binom.test(~ results0 <= 0.05) # matches what we would expect!
 tictoc::toc()
 ```
 
+As a check, I first ran the simulation with no treatment effect. The estimated rejection rate was close to 0.05, which is what I would expect under the null hypothesis. 
+
+```{r}
+set.seed(1821)
+data_A_example <- gen_data(beta_1 = -0.4, itt_prob = 0)
+mean(data_A_example$status == 0)
+
+S_control <- exp(-(5 / 5)^3)
+S_treat <- exp(-exp(-0.4) * (5 / 5)^3)
+mean_censored_A <- mean(c(S_control, S_treat))
+mean_censored_A
+
+```
 
 
 \noindent
 a) Approximately what proportion of the subjects are censored in this study? (Hint: you can get a quick estimate by simulating a single dataset and looking at the proportion of censored subjects, but you can also calculate this using the underlying distribution and parameters.)
 
-SOLUTION:
+SOLUTION: 44% are censored. In fact, as there is no censorship that happens during the follow up time and the censorhip only happens for patients that survived for longer than 5 weeks - the censorhip rate is just mean of survived patients among 2 groups. 
 
 \noindent
 
+```{r}
+set.seed(1821)
+fit_fun <- function(beta_1 = -0.4, itt_prob = 0) {
+  data <- gen_data(beta_1 = beta_1, itt_prob = itt_prob)
+
+  fit <- survdiff(Surv(time, status) ~ randomized_treat, data = data)
+
+  p_val <- 1 - pchisq(fit$chisq, df = 1)
+
+  tibble(
+    beta_1 = beta_1,
+    itt_prob = itt_prob,
+    Wald.p = p_val
+  )
+}
+
+results_A <- 1:num_sim |>
+  purrr::map_dfr(~ fit_fun(beta_1 = -0.4, itt_prob = 0)) |>
+  mutate(reject = Wald.p <= 0.05)
+
+binom.test(sum(results_A$reject), num_sim)
+
+```
+
 b) Report your estimate of power for this study, along with a 95% confidence interval around your estimate.
 Interpret your findings.
+
+The estimated power was approximately 0.732, with a 95% confidence interval of (0.71 0.75). This means that, if the true log hazard ratio is -0.4, the study would reject the null hypothesis about 74.5% of the time at the 0.05 significance level.
 
 
 
@@ -143,7 +205,21 @@ These subjects will be analyzed in their randomized treatment group, but the sim
 
 Repeat the power calculation for the study under Scenario B (again calculating and reporting a 95% confidence interval around your estimate of power), and interpret your findings.
 
-SOLUTION FOR SCENARIO A:
+
+```{r}
+results_B <- 1:num_sim |>
+  purrr::map_dfr(~ fit_fun(beta_1 = -0.4, itt_prob = 0.1)) |>
+  mutate(reject = Wald.p <= 0.05)
+
+binom.test(sum(results_B$reject), num_sim)
+
+
+```
+
+SOLUTION FOR SCENARIO B:
+
+In Scenario B, 10% of subjects randomized to treatment are assumed not to take the medication, so their event times are generated as if they were controls. However, they are still analyzed in the treatment group. The estimated power was approximately 0.64, with a 95% confidence interval of (0.62, 0.66). Compared with Scenario A, the power is lower because non-compliance weakens the observed difference between the randomized treatment and control groups. 
+
 
 ### Conclusion
 
