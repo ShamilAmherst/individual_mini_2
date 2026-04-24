@@ -1,0 +1,153 @@
+---
+title: "STAT 350 (Survival Analysis): Final group assignment"
+author: "XX YOUR NAMES HERE XX"
+date: "2026-04-XX"
+date-format: iso
+format: pdf
+toc: true
+editor: source
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(mosaic)   
+library(tidyverse)
+library(survival)
+library(rsurv)
+rnd_val <- 2
+```
+
+## Instructions
+
+This final group assignment has two parts:
+
+1. find a journal article (ideally in your topic area, but that's not necessary) that fits and reports a Cox proportional hazards model.
+Add the pdf of the article to the `assignment_2` folder, then review how the authors report and assessed the Cox model.
+2. Carry out a power calculation for an investigator planning a study with a survival time outcome.
+Utilize a simulation study to estimate the power needed given the scenario provided and the sample size available.
+
+This assignment is due via GitHub submission by the end of the day on Wednesday, April 29th.
+
+> Please indicate any resources such as generative AI beyond the instructor, textbook, notes, or materials from the class that were used in your solution (or indicate "We used no additional materials or resources"):
+
+XX ADD STATEMENT HERE XX
+
+\newpage
+
+## Cox model in practice
+
+Find a journal article that fits and reports a Cox proportional hazards model.
+Share the abstract and title page with Nick (using the issue that he has created for you).
+Once Nick has signed off, you should  then review how the authors report and assessed the Cox model in their paper.
+Include a in-text citation (no BibTeX needed!) for the article, provide a brief summary of the article, describe how the authors assessed the Cox model, and share any comments you have on their approach.
+
+SOLUTION:
+
+- TITLE:
+- AUTHORS:
+- JOURNAL:
+- YEAR:
+- VOLUME: 
+- URL/DOI: 
+
+XX
+
+
+
+\newpage
+
+## Power calculation introduction
+
+One of your classmates has gotten a degree in public health and has a new job working in a large research lab.
+They have been tasked with coming up with an estimate of power for a survival study they are planning.
+
+Scenario A: Here are the details of the study:
+
+1. They can only afford a total of n = 300 subjects (150 in each of two treatment groups).
+2. They anticipate that the underlying survival times are Weibull with scale parameter = 5 and shape parameter = 3 (using the `rsurv::rphreg()` parametrization).
+3. The true log hazard rate (comparing treatment to control) is assumed to be -0.4 (i.e., a hazard ratio of exp(-0.4) = 0.67).
+4. They will follow subjects for a maximum of five (5) weeks (time unit in the study is weeks).
+5. The subjects are enrolled at the start of the study (i.e., there is no staggered entry) and are followed until the end of the study or until they have an event, whichever comes first.
+6. The survival times are independent across subjects (so no frailties are needed).
+7. The investigators will analyze the data using a logrank test to compare the two treatment groups.
+
+Carry out an empirical power calculation for this study with `num_sim = 2000` simulations, assuming that the investigators will analyze the data using a logrank test.
+
+(Hint 1: to check that your results make sense, you may want to first run a simulation with the treatment effect set to 0, which should give you an estimate of power close to 0.05!)
+
+(Hint 2: the `binom.test()` function can be used to calculate a confidence interval around your estimate of power, which is a convenient way to quantify the uncertainty in your estimate.)
+
+### Scenario A
+
+## Code and simulations
+
+```{r}
+set.seed(1821)
+num_sim <- 2000 
+
+gen_data <- function(
+  beta_1 = -0.8, # log hazard ratio for treatment effect
+  itt_prob = 0.1, # P(intervention subject doesn't take meds)
+  shape_val = 3, # underlying shape value
+  scale_val = 5, # underlying scale value
+  n = 300, # total sample size (half randomized to each group)
+  tau = 5 # maximum follow up time
+    ) {
+  simulated_data <- tibble(
+    randomized_treat = rep(c(0, 1), times = n/2)
+  )
+  # add other lines here
+  return(simulated_data)
+}
+```
+
+
+```{r}
+#| eval: false
+run_sim0 <- function() {
+  data <- gen_data(beta_1 = 0)
+  fit <- survdiff(Surv(time, status) ~ randomized_treat, data = data)
+  return(fit$pvalue)
+}
+
+tictoc::tic()
+results0 <- 1:num_sim |>
+  purrr::map_dbl(~ run_sim0())
+binom.test(~ results0 <= 0.05) # matches what we would expect!
+tictoc::toc()
+```
+
+
+
+\noindent
+a) Approximately what proportion of the subjects are censored in this study? (Hint: you can get a quick estimate by simulating a single dataset and looking at the proportion of censored subjects, but you can also calculate this using the underlying distribution and parameters.)
+
+SOLUTION:
+
+\noindent
+
+b) Report your estimate of power for this study, along with a 95% confidence interval around your estimate.
+Interpret your findings.
+
+
+
+\newpage
+
+### Scenario B
+
+Scenario B: Your classmate comes back and says that they are concerned about non-compliance in the treatment group.
+
+Based on pilot data, they anticipate that 10% of subjects randomized to the treatment group will not take their medication (i.e., they will be "non-compliant" and have the same hazard as the control group).
+These subjects will be analyzed in their randomized treatment group, but the simulation should assume that they are just like the controls.
+
+Repeat the power calculation for the study under Scenario B (again calculating and reporting a 95% confidence interval around your estimate of power), and interpret your findings.
+
+SOLUTION FOR SCENARIO A:
+
+### Conclusion
+
+Write a short (no more than four paragraph) conclusion summarizing your findings from the power calculations in Scenario A and B, and any comments you have on the impact of non-compliance on power in this setting.
+
+SOLUTION:
+
