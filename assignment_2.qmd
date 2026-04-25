@@ -31,7 +31,7 @@ This assignment is due via GitHub submission by the end of the day on Wednesday,
 
 > Please indicate any resources such as generative AI beyond the instructor, textbook, notes, or materials from the class that were used in your solution (or indicate "We used no additional materials or resources"):
 
-XX ADD STATEMENT HERE XX
+I used google's automatic AI-generated response (the first tab) when looking up syntaxes of code and no other additional resources. 
 
 \newpage
 
@@ -190,7 +190,7 @@ binom.test(sum(results_A$reject), num_sim)
 b) Report your estimate of power for this study, along with a 95% confidence interval around your estimate.
 Interpret your findings.
 
-The estimated power was approximately 0.732, with a 95% confidence interval of (0.71 0.75). This means that, if the true log hazard ratio is -0.4, the study would reject the null hypothesis about 74.5% of the time at the 0.05 significance level.
+The estimated power was approximately 0.732, with a 95% confidence interval of (0.71 0.75). This means that, if the true log hazard ratio is -0.4, the study would reject the null hypothesis about 73.2% of the time at the 0.05 significance level.
 
 
 
@@ -226,4 +226,10 @@ In Scenario B, 10% of subjects randomized to treatment are assumed not to take t
 Write a short (no more than four paragraph) conclusion summarizing your findings from the power calculations in Scenario A and B, and any comments you have on the impact of non-compliance on power in this setting.
 
 SOLUTION:
+
+In Scenario A, where all subjects randomized to treatment are assumed to actually receive the treatment, the simulation suggests that the planned study has moderate power to detect the assumed treatment effect. With a true log hazard ratio of -0.4, corresponding to a hazard ratio of about 0.67, the estimated power was approximately 0.732, with a 95% ci of about (0.71, 0.75). This means that under these assumption and confidence level of 0.05 we're going to reject the null hypothesis (where null hypothesis is 0 treatment effect) only in 73.2%
+
+In Scenario B, where 10% of subjects randomized to treatment are assumed not to take the medication, the estimated power decreased to approximately 0.64, with a 95% ci of (0.62, 0.66). This drop makes sense because the treatment group now contains some subjects whose event times behave like the control group, even though they are still analyzed as part of the treatment group. As a result, the observed effect of treatment in the treatment group is lower than it's actually is. 
+
+Overall, these simulations show that non-compliance can meaningfully reduce statistical power even when the sample size and follow-up time stay the same. In this setting, the planned study already has only moderate power under perfect compliance, and the introduction of 10% non-compliance makes the study less likely to detect the true treatment effect.
 
